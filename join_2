@@ -1,0 +1,23 @@
+from pyspark.sql.functions import col
+
+# Load tables
+customers_df = spark.read.table("kyvos.finance.customers")
+fact_insurance_df = spark.read.table("kyvos.finance.fact_insurance")
+policy_types_df = spark.read.table("kyvos.finance.ref_policy_types")
+calendar_df = spark.read.table("kyvos.finance.ref_calendar")
+
+
+result_df = (
+    customers_df
+    .join(fact_insurance_df, "Customer_ID", "left")  # Keep all customers, even if they have no insurance
+    .join(policy_types_df, "Policy_Type_Code", "left")  # Keep all policies, even if they have no matching type
+    .join(calendar_df, fact_insurance_df.Reporting_Date == calendar_df.Day_Date, "left")  # Keep all dates, even if missing
+    .select(
+        col("Name").alias("Customer_Name"),
+        col("Policy_Type_Name"),
+        col("Day_Date")
+    )
+)
+
+# Show the result
+result_df.display()
