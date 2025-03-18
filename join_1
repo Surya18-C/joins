@@ -1,0 +1,25 @@
+from pyspark.sql.functions import col
+
+# Load tables
+customers_df = spark.read.table("kyvos.finance.customers")
+addresses_df = spark.read.table("kyvos.finance.addresses")
+fact_insurance_df = spark.read.table("kyvos.finance.fact_insurance")
+policy_types_df = spark.read.table("kyvos.finance.ref_policy_types")
+
+# Perform the join
+result_df = (
+    customers_df
+    .join(fact_insurance_df, "Customer_ID", "left")  # Join customers with fact_insurance
+    .join(addresses_df, "Address_ID", "left")  # Join with addresses
+    .join(policy_types_df, "Policy_Type_Code", "left")  # Join with policy types
+    .select(
+        col("Name").alias("Customer_Name"),
+        col("Address_Details").alias("Address"),
+        col("Payment_Date"),
+        col("Policy_Type_Name").alias("Policy_Name"),
+        col("Category")
+    )
+)
+
+# Show the result
+result_df.display()
